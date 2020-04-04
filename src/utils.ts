@@ -27,6 +27,66 @@ export const getTextChannel: (guild: Discord.Guild) => Discord.TextChannel = (gu
    .first() as Discord.TextChannel;
 }
 
+export const getVoiceChannels: (guild: Discord.Guild) => Discord.TextChannel = (guild) => {
+  // voice channels
+  return guild.channels.cache
+   .filter(c => c.type === 'voice');
+}
+
+
+//Figures out if Rasputin makes an appearance with a special event
+//This is where should add more random events
+export function Rasputin (user: Discord.GuildMember, voiceChannel: Discord.VoiceChannel, guild: Discord.Guild, gulagUsers, channel ) {
+
+  if (user.id === '99305418186031104') { // Cazif
+    if (Math.random() < 0.69) { // 69% chance that Cazif triggers the easter egg
+      delete gulagUsers[user.id];
+      log(`${user.user.tag} triggered the Cazif likes men easter egg!`);
+      channel.send(`${user} likes men. Men don't like ${user}. Neither does the Gulag.`);
+      user.edit({ channel: null }, 'lost in the Gulag');
+      return true;
+    }
+  }
+  else if (Math.random() < 0.05) { //deathnote
+    log(`The gulag is empty except for a shadowy figure, Rasputin appears for ${user.user.tag}`);
+    channel.send(`The gulag is empty except for a shadowy figure - Rasputin appears for ${user.user.tag}! He says "YOU HAVE A CHAOTIC AURA. WRITE A NAME IN MY DEATHNOTE AND BE SPARED"`)
+    .then(() => channel.send(`${user}, type someone's name exactly to kill them with Rasputin's Death Note.`))
+      .then((msg) => {
+        // listen for messages from the user
+        const filter = m => m.author.id === user.id;
+        const collector = msg.channel.createMessageCollector(filter, { time: 15000 });
+
+        collector.on('collect', m => {
+          delete gulagUsers[user.id];
+          collector.stop();
+          const chosen = m.content.trim();
+          for (let member: Discord.GuildMember in guild.members) {
+            if (member.nickname === chosen) {
+              member.edit({ channel: null }, ' falls down the stairs.');
+              user.edit({ channel: voiceChannel });
+            }
+          }
+        });
+        
+        collector.on('end', () => {
+          if (gulagUsers[user.id]) {
+            delete gulagUsers[user.id];
+            userTimeout(user, channel);
+          }
+        });  
+            
+      });
+      return true;
+  }
+
+
+
+
+
+
+}
+
+
 export const calculateWin = (a, b) => {
   if (a === b) return true;
 

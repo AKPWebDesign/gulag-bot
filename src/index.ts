@@ -1,12 +1,14 @@
 import Discord from 'discord.js';
-import { calculateWin, getTextChannel, log, userLose, userTimeout, userWin } from './utils';
+import { calculateWin, getTextChannel, log, userLose, userTimeout, userWin, Rasputin } from './utils';
+
+//Bot permissions can move/dc anyone anywhere, move people in and out of gulag
 
 // load dotenv file into process.env
 require('dotenv').config();
 
 const client = new Discord.Client();
 
-const gulagUsers: { [index: string]: boolean } = {};
+declare const gulagUsers: { [index: string]: boolean } = {};
 
 client.on('ready', () => {
   log(`Logged in as ${client.user.tag}!`);
@@ -33,13 +35,9 @@ client.on('voiceStateUpdate', (oldState, newState) => {
     // get the correct text channel to send updates to
     const channel = getTextChannel(guild);
 
-    if (user.id === '99305418186031104') { // Cazif
-      if (Math.random() < 0.69) { // 69% chance that Cazif triggers the easter egg
-        delete gulagUsers[user.id];
-        log(`${user.user.tag} triggered the Cazif likes men easter egg!`);
-        channel.send(`${user} likes men. Men don't like ${user}. Neither does the Gulag.`);
-        return user.edit({ channel: null }, 'lost in the Gulag');
-      }
+    //Is there going to be a special event ?
+    if (Rasputin(user, oldChannel, guild, gulagUsers, channel)) {
+      return channel.send(`Rasuptin returns to the shadows. For now.`);
     }
 
     // send a message telling everyone the user is now in the Gulag and can only exit if they win a game of rock, paper, scissors
