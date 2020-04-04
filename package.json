@@ -1,0 +1,28 @@
+{
+  "name": "gulagbot",
+  "version": "1.0.0",
+  "main": "build/index.js",
+  "source": "src/index.ts",
+  "license": "MIT",
+  "scripts": {
+    "build": "parcel build src/index.ts",
+    "watch": "parcel watch src/index.ts",
+    "start": "yarn watch & nodemon build/index.js"
+  },
+  "engines": {
+    "node": ">=10.x"
+  },
+  "dependencies": {
+    "date-fns": "^2.11.1",
+    "discord.js": "^12.1.1",
+    "dotenv": "^8.2.0",
+    "long": "^4.0.0"
+  },
+  "devDependencies": {
+    "@types/long": "^4.0.1",
+    "@types/node": "^13.11.0",
+    "nodemon": "^2.0.2",
+    "parcel": "^2.0.0-nightly.196",
+    "typescript": "^3.8.3"
+  }
+}
