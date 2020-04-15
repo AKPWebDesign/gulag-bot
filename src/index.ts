@@ -35,10 +35,23 @@ client.on('voiceStateUpdate', (oldState, newState) => {
 
     if (user.id === '99305418186031104') { // Cazif
       if (Math.random() < 0.69) { // 69% chance that Cazif triggers the easter egg
-        delete gulagUsers[user.id];
         log(`${user.user.tag} triggered the Cazif likes men easter egg!`);
         channel.send(`${user} likes men. Men don't like ${user}. Neither does the Gulag.`);
-        return user.edit({ channel: null }, 'lost in the Gulag');
+        return setTimeout(() => {
+          delete gulagUsers[user.id];
+          return user.edit({ channel: null }, 'lost in the Gulag');
+        }, 4000);
+      }
+    }
+
+    if (user.id === '226444355978657796') { // docilememer
+      if (Math.random() < 0.15) {
+        log(`${user.user.tag} triggered the goblin easter egg!`);
+        channel.send(`${user}? We don't take kindly to goblins in the Gulag!`);
+        return setTimeout(() => {
+          delete gulagUsers[user.id];
+          return user.edit({ channel: null }, 'lost in the Gulag');
+        }, 4000);
       }
     }
 
