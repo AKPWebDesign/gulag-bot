@@ -2,10 +2,10 @@ FROM node:lts
 
 WORKDIR /usr/src/gulagbot
 
-COPY package.json yarn.lock ./
+COPY package.json pnpm-lock.yaml ./
 
-RUN yarn
+RUN pnpm install --frozen-lockfile
 
 COPY . .
 
-CMD ["yarn", "start:prod"]
+CMD ["pnpm", "start:prod"]
