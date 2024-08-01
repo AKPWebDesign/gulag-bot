@@ -1,19 +1,23 @@
-import Discord from 'discord.js';
-import { calculateWin, getTextChannel, log, userLose, userTimeout, userWin } from './utils';
+import { ActivityType, ChannelType, Client, GatewayIntentBits } from 'discord.js';
+import { calculateWin, findChannel, getTextChannel, isVoiceChannel, KnownUsers, log, userLose, userTimeout, userWin } from './utils';
 
 // load dotenv file into process.env
 require('dotenv').config();
 
-const client = new Discord.Client();
+const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 
 const gulagUsers: { [index: string]: boolean } = {};
 
 client.on('ready', () => {
+  if (client.user === null) {
+    return log('Failed to log in as the bot.');
+  }
+
   log(`Logged in as ${client.user.tag}!`);
-  client.user.setActivity('The Gulag', { type: 'WATCHING' });
+  client.user.setActivity('The Gulag', { type: ActivityType.Watching });
 });
 
-client.on('voiceStateUpdate', (oldState, newState) => {
+client.on('voiceStateUpdate', async (oldState, newState) => {
   const oldChannel = oldState.channel;
   const guild = newState.guild;
   const channel = newState.channel;
@@ -22,7 +26,13 @@ client.on('voiceStateUpdate', (oldState, newState) => {
   if (!channel || !user) { return; }
 
   if (gulagUsers[user.id] && channel.name !== 'Gulag') {
-    user.edit({ channel: guild.channels.cache.find(channel => channel.name === 'Gulag')});
+    const voiceChannel = await findChannel({ guild, name: 'Gulag', type: ChannelType.GuildVoice });
+
+    if (voiceChannel == null || !isVoiceChannel(voiceChannel)) {
+      return log('Failed to find the Gulag voice channel.');
+    }
+
+    user.edit({ channel: voiceChannel });
   }
 
   if (channel.name === 'Gulag' && !gulagUsers[user.id]) {
@@ -31,26 +41,30 @@ client.on('voiceStateUpdate', (oldState, newState) => {
     log(`${user.user.tag} entered the Gulag`);
 
     // get the correct text channel to send updates to
-    const channel = getTextChannel(guild);
+    const channel = await getTextChannel(guild);
 
-    if (user.id === '99305418186031104') { // Cazif
+    if (channel == null) {
+      return log('Failed to find the Gulag text channel.');
+    }
+
+    if (user.id === KnownUsers.Cazif) {
       if (Math.random() < 0.69) { // 69% chance that Cazif triggers the easter egg
         log(`${user.user.tag} triggered the Cazif likes men easter egg!`);
         channel.send(`${user} likes men. Men don't like ${user}. Neither does the Gulag.`);
         return setTimeout(() => {
           delete gulagUsers[user.id];
-          return user.edit({ channel: null }, 'lost in the Gulag');
+          return user.edit({ channel: null, reason: 'lost in the Gulag' });
         }, 4000);
       }
     }
 
-    if (user.id === '226444355978657796') { // docilememer
+    if (user.id === KnownUsers.docilememer) {
       if (Math.random() < 0.15) {
         log(`${user.user.tag} triggered the goblin easter egg!`);
         channel.send(`${user}? We don't take kindly to goblins in the Gulag!`);
         return setTimeout(() => {
           delete gulagUsers[user.id];
-          return user.edit({ channel: null }, 'lost in the Gulag');
+          return user.edit({ channel: null, reason: 'lost in the Gulag' });
         }, 4000);
       }
     }
@@ -61,7 +75,7 @@ client.on('voiceStateUpdate', (oldState, newState) => {
       .then((msg) => {
         // listen for messages from the user
         const filter = m => m.author.id === user.id;
-        const collector = msg.channel.createMessageCollector(filter, { time: 15000 });
+        const collector = msg.channel.createMessageCollector({ filter, time: 15000 });
 
         collector.on('collect', m => {
           delete gulagUsers[user.id];
@@ -72,7 +86,7 @@ client.on('voiceStateUpdate', (oldState, newState) => {
 
           if (!valid.includes(chosen)) {
             const ignore = Math.random() >= 0.95; // 5% chance to get lucky and win anyway
-            if (ignore && oldChannel) {
+            if (ignore && oldChannel != null && isVoiceChannel(oldChannel)) {
               return userWin(
                 user,
                 channel,
@@ -98,7 +112,7 @@ client.on('voiceStateUpdate', (oldState, newState) => {
           const win = calculateWin(chosen, botChoices[botIndex]);
 
           if (win) {
-            if (!oldChannel) {
+            if (oldChannel == null || !isVoiceChannel(oldChannel)) {
               return userLose(
                 user,
                 channel,
